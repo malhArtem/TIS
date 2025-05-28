@@ -32,4 +32,7 @@
 10. Какие документы составялет тестировщик и их назначение
 
 686824d6b215fcbbc54aa81cc3b8f8ba?sinfo=p4LWzNtJ4gWLJFL4A4ayFkNNLOBr0XPm
+
 rtmp://rtmp-lb.ost.rutube.ru/live_push
+
+1b90e6c7a7a68682427b9899b3a222f5?sinfo=w9kNzASdAQD9kIP1Y79JTAdEN2vKAgk
