@@ -31,3 +31,5 @@
 9. Test-Driven Development (TDD): Опишите принцип «красный — зелёный — рефакторинг». Какие преимущества и ограничения есть у TDD?
 10. Какие документы составялет тестировщик и их назначение
 
+686824d6b215fcbbc54aa81cc3b8f8ba?sinfo=p4LWzNtJ4gWLJFL4A4ayFkNNLOBr0XPm
+rtmp://rtmp-lb.ost.rutube.ru/live_push
