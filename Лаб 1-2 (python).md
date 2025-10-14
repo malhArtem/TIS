@@ -54,6 +54,7 @@ prj:
 		tests_solve.py - тесты общего
 ```
 *Важно понимать, что скорее всего поломаются импорты
+
 Пример импорта:
 Получение функции diskr из файла funcs в файле tests_diskr:
 `from src.funcs import diskr`
