@@ -73,7 +73,7 @@ def mass_test_discr():
         calc_result = discr(*param)  
   
         if abs(calc_result - true_result) > tolerance:  
-            print(f"Ошибка с параметрами ({param[0]}, {param[1], param[2]}): {true_result}, вычисленный результат: {calc_result}")  
+            print(f"Ошибка с параметрами ({param[0]}, {param[1]}, {param[2]}): {true_result}, вычисленный результат: {calc_result}")  
             return False  
         print("Тест успешен")  
     return True
