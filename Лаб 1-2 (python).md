@@ -84,3 +84,20 @@ def mass_test_discr():
 Команда для запуска `python -m tests.tests`
 
 #### 4. Далее необходимо написать негативные тесты, в данном случае тесты для функции solve, с различной комбинацией нулевых параметров (Пример: `solve(0, 1, 2)`), если возникают ошибки - исправить их
+
+### Результат
+В итоге должно получиться:
+* tests_lin_solve.py: 
+  * test_lin_solve() - единичный тест функции линейного уравнения
+  * mass_test_lin_solve() - массовый тест функции линейного уравнения
+* tests_discr.py:
+  	* test_discr()
+  	* mass_test_discr()
+* tests_sq_solve.py:
+  * test_sq_solve()
+  * mass_test_sq_solve()
+* test_solve.py:
+  * test_solve()
+  * mass_test_solve()
+  * neg_test_solve() - негативные тесты
+* tests.py - файл в котором запускаются все тесты
