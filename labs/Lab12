@@ -1,0 +1,315 @@
+## Лабораторная работа №12. Тестирование API
+
+---
+
+### 1. Цель работы
+
+Приобрести практические навыки ручного тестирования REST API с использованием инструментов (Postman, cURL, Swagger). Освоить составление тест-кейсов, анализ форматов запросов и ответов, а также оформление отчета о тестировании с выявленными дефектами.
+
+---
+
+### 2. Теоретические сведения
+
+#### 2.1. Основы REST API
+
+**REST (Representational State Transfer)** – архитектурный стиль, в котором ресурсы идентифицируются URL, а операции над ними выполняются с помощью стандартных HTTP-методов. Основные принципы REST:
+
+- **Клиент-серверная архитектура**
+- **Отсутствие состояния (stateless)** – каждый запрос содержит всю необходимую информацию
+- **Кэширование**
+- **Единообразие интерфейса** – использование стандартных HTTP методов и кодов ответа
+
+#### 2.2. Формат HTTP-запроса
+
+HTTP-запрос состоит из:
+1. **Стартовая строка** – метод, URL, версия HTTP
+2. **Заголовки (headers)** – метаданные (Content-Type, Authorization и др.)
+3. **Тело (body)** – данные, передаваемые на сервер (обычно в формате JSON)
+
+**Основные методы HTTP:**
+
+| Метод | Назначение | Идемпотентность |
+|-------|------------|-----------------|
+| GET   | Получение ресурса | Да |
+| POST  | Создание нового ресурса | Нет |
+| PUT   | Полная замена ресурса | Да |
+| PATCH | Частичное обновление | Нет (может быть) |
+| DELETE| Удаление ресурса | Да |
+
+#### 2.3. Формат HTTP-ответа
+
+Ответ сервера содержит:
+1. **Строку статуса** – версия HTTP, код состояния, текстовое описание
+2. **Заголовки** – Content-Type, Content-Length, Cache-Control и др.
+3. **Тело ответа** – данные в формате JSON, XML или другом
+
+**Коды состояния HTTP:**
+
+| Диапазон | Категория | Примеры |
+|----------|-----------|---------|
+| 2xx | Успех | 200 OK, 201 Created, 204 No Content |
+| 4xx | Ошибка клиента | 400 Bad Request, 404 Not Found, 422 Unprocessable Entity |
+| 5xx | Ошибка сервера | 500 Internal Server Error |
+
+#### 2.4. Формат JSON в API
+
+JSON (JavaScript Object Notation) – основной формат обмена данными в REST API. В тестируемом API используются следующие структуры:
+
+**Создание задачи (POST /tasks) – согласно спецификации:**
+
+```json
+{
+    "title": "string",           // обязательное поле
+    "description": "string",     // опционально
+    "completed": false           // опционально, по умолчанию false
+}
+```
+
+**Ответ для задачи (GET, POST, PUT, PATCH):**
+
+```json
+{
+    "id": 1,
+    "title": "string",
+    "description": "string или null",
+    "completed": true/false
+}
+```
+
+**Список задач (GET /tasks):**
+
+```json
+[
+    { "id": 1, "title": "...", "description": "...", "completed": false },
+    { "id": 2, "title": "...", "description": "...", "completed": true }
+]
+```
+
+**Ошибка валидации (422):**
+
+```json
+{
+    "detail": [
+        {
+            "loc": ["body", "title"],
+            "msg": "field required",
+            "type": "value_error.missing"
+        }
+    ]
+}
+```
+
+**Ошибка "не найдено" (404):**
+
+```json
+{
+    "detail": "Task not found"
+}
+```
+
+#### 2.5. Инструменты для ручного тестирования
+
+- **Swagger UI** – встроенная документация, доступная по `/docs`. Позволяет отправлять запросы прямо из браузера.
+- **Postman** – графический инструмент для создания коллекций запросов, управления переменными, просмотра истории.
+- **cURL** – консольная утилита для отправки HTTP-запросов.
+
+cURL
+Примеры:
+
+bash
+# GET запрос
+curl -X GET http://127.0.0.1:8000/tasks
+
+# POST с JSON
+curl -X POST http://127.0.0.1:8000/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Купить хлеб","description":"В магазине"}'
+
+# PUT
+curl -X PUT http://127.0.0.1:8000/tasks/1 \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Обновлено","description":"Новое описание","completed":true}'
+
+# DELETE
+curl -X DELETE http://127.0.0.1:8000/tasks/1
+3. Разработанный API
+
+---
+
+### 3. Разработанный API
+
+Создано REST API для управления списком задач (ToDo) на фреймворке FastAPI. API работает с ресурсом «задача», каждая задача имеет поля:
+
+- `id` (целое число) – уникальный идентификатор;
+- `title` (строка, **обязательное**) – название задачи;
+- `description` (строка, необязательное) – описание;
+- `completed` (логическое, по умолчанию `false`) – статус выполнения.
+
+#### 3.1. Эндпоинты
+
+| Метод | URL                | Описание                               | Тело запроса (JSON)                                   | Успешный ответ (код, тело)        |
+|-------|--------------------|----------------------------------------|-------------------------------------------------------|-----------------------------------|
+| GET   | `/tasks`           | Получить список всех задач             | –                                                     | 200 OK, массив задач              |
+| GET   | `/tasks/{id}`      | Получить задачу по ID                  | –                                                     | 200 OK, объект задачи             |
+| POST  | `/tasks`           | Создать новую задачу                   | `{"title": "string", "description": "string", "completed": bool}` | 201 Created, созданная задача |
+| PUT   | `/tasks/{id}`      | Полностью обновить задачу              | `{"title": "string", "description": "string", "completed": bool}` | 200 OK, обновлённая задача    |
+| PATCH | `/tasks/{id}`      | Частично обновить задачу               | Любые из полей (`title`, `description`, `completed`)  | 200 OK, обновлённая задача    |
+| DELETE| `/tasks/{id}`      | Удалить задачу                         | –                                                     | 204 No Content                    |
+
+#### 3.2. Код API (`main.py`) – содержит намеренные ошибки
+
+```python
+from fastapi import FastAPI, HTTPException, status
+from pydantic import BaseModel
+from typing import List, Optional
+
+app = FastAPI(title="ToDo API", version="1.0.0")
+
+# Модели данных
+
+class TaskCreate(BaseModel):
+    title: Optional[str] = None          # должно быть title: str
+    description: Optional[str] = None
+    completed: bool = False
+
+class TaskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    completed: Optional[bool] = None
+
+class TaskResponse(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    completed: bool
+
+# Хранилище в памяти
+tasks_db = {}
+task_counter = 1
+
+@app.get("/tasks", response_model=List[TaskResponse])
+def get_tasks():
+    return list(tasks_db.values())
+
+@app.get("/tasks/{task_id}", response_model=TaskResponse)
+def get_task(task_id: int):
+    if task_id not in tasks_db:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return tasks_db[task_id]
+
+@app.post("/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
+def create_task(task: TaskCreate):
+    global task_counter
+    new_id = task_counter
+    task_counter += 1
+
+    if task.title is None:
+        task.title = ""
+
+    task_dict = task.dict()
+    task_dict["id"] = new_id
+    tasks_db[new_id] = task_dict
+    return task_dict
+
+@app.put("/tasks/{task_id}", response_model=TaskResponse)
+def update_task(task_id: int, task: TaskCreate):
+    if task_id not in tasks_db:
+        raise HTTPException(status_code=404, detail="Task not found")
+    updated_task = task.dict()
+    updated_task["id"] = task_id
+    tasks_db[task_id] = updated_task
+    return updated_task
+
+@app.patch("/tasks/{task_id}", response_model=TaskResponse)
+def partial_update_task(task_id: int, task: TaskUpdate):
+    if task_id not in tasks_db:
+        raise HTTPException(status_code=404, detail="Task not found")
+    stored = tasks_db[task_id]
+    update_data = task.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        stored[key] = value
+    tasks_db[task_id] = stored
+    return stored
+
+@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(task_id: int):
+    if task_id not in tasks_db:
+        raise HTTPException(status_code=404, detail="Task not found")
+    del tasks_db[task_id]
+    return None
+```
+
+#### 3.3. Запуск API
+1. Скопируйте код в любую среду разработки для python
+1. Установите зависимости (команда в терминале):
+   ```bash
+   pip install fastapi uvicorn
+   ```
+2. Запустите сервер (команда в терминале):
+   ```bash
+   uvicorn main:app --reload
+   ```
+3. Откройте интерактивную документацию: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+---
+
+### 4. План тестирования (тест-кейсы)
+
+В таблице приведены тест-кейсы для каждого эндпоинта. Выполните каждый тест-кейс, зафиксируйте фактический результат и сравните с ожидаемым. Особое внимание обратите на тесты, которые должны выявить дефекты (TC-04, TC-10).
+
+| ID   | Наименование теста                       | Предусловия | Шаги | Ожидаемый результат (формат) |
+|------|------------------------------------------|-------------|------|------------------------------|
+| TC-01 | GET /tasks – получение пустого списка    | Нет задач | 1. GET `/tasks` | 200 OK, тело: `[]` |
+| TC-02 | POST /tasks – создание задачи с обязательными полями | – | 1. POST `/tasks` с телом `{"title": "Помыть посуду"}` | 201 Created, тело содержит `id`, `title`: "Помыть посуду", `description`: null, `completed`: false |
+| TC-03 | POST /tasks – создание задачи со всеми полями | – | 1. POST `/tasks` с телом `{"title": "Купить хлеб", "description": "В магазине", "completed": true}` | 201 Created, тело: `{"id": число, "title": "Купить хлеб", "description": "В магазине", "completed": true}` |
+| TC-04 | POST /tasks – отсутствие обязательного поля `title` | – | 1. POST `/tasks` с телом `{"description": "Описание"}` | 422 Unprocessable Entity, ошибка валидации |
+| TC-05 | POST /tasks – некорректный тип данных    | – | 1. POST `/tasks` с телом `{"title": 123}` | 422 Unprocessable Entity, ошибка валидации |
+| TC-06 | GET /tasks – получение непустого списка | Создана хотя бы одна задача | 1. GET `/tasks` | 200 OK, массив содержит созданные задачи |
+| TC-07 | GET /tasks/{id} – получение существующей задачи | Существует задача с id=1 | 1. GET `/tasks/1` | 200 OK, тело соответствует задаче |
+| TC-08 | GET /tasks/{id} – несуществующий id | – | 1. GET `/tasks/999` | 404 Not Found, `{"detail": "Task not found"}` |
+| TC-09 | PUT /tasks/{id} – полное обновление существующей задачи | Существует задача с id=1 | 1. PUT `/tasks/1` с телом `{"title": "Обновлено", "description": "Новое описание", "completed": true}` | 200 OK, все поля обновлены |
+| TC-10 | PUT /tasks/{id} – отсутствие поля `completed` | Существует задача с id=1 | 1. PUT `/tasks/1` с телом `{"title": "Обновлено", "description": "Новое описание"}` | 422 Unprocessable Entity, ошибка валидации (поле completed обязательно) |
+| TC-11 | PUT /tasks/{id} – отсутствие поля `title` | Существует задача | 1. PUT `/tasks/1` с телом `{"description": "Описание", "completed": false}` | 422 Unprocessable Entity, ошибка валидации |
+| TC-12 | PUT /tasks/{id} – обновление несуществующей задачи | – | 1. PUT `/tasks/999` с корректным телом | 404 Not Found, `{"detail": "Task not found"}` |
+| TC-13 | PATCH /tasks/{id} – частичное обновление | Существует задача с id=1 | 1. PATCH `/tasks/1` с телом `{"completed": true}` | 200 OK, поле `completed` = true, остальные поля не изменились |
+| TC-14 | PATCH /tasks/{id} – обновление с пустым телом | Существует задача | 1. PATCH `/tasks/1` с телом `{}` | 200 OK, задача без изменений (допустимо) |
+| TC-15 | DELETE /tasks/{id} – удаление существующей задачи | Существует задача с id=1 | 1. DELETE `/tasks/1` | 204 No Content, тело отсутствует |
+| TC-16 | DELETE /tasks/{id} – повторное удаление | Задача удалена | 1. DELETE `/tasks/1` | 404 Not Found, `{"detail": "Task not found"}` |
+| TC-17 | Неверный метод – проверка обработки | – | 1. POST `/tasks/1` (вместо GET) | 405 Method Not Allowed (или 404) |
+
+---
+
+### 5. Выполнение тестирования и отчёт
+
+#### 5.1. Инструмент тестирования
+
+Укажите, какой инструмент вы использовали (например, Swagger UI, Postman, cURL).
+
+#### 5.2. Результаты выполнения тест-кейсов
+
+Заполните таблицу, добавив столбцы с фактическим результатом и статусом (Pass/Fail). Для каждого тест-кейса приведите фактический ответ (код и тело) в краткой форме.
+
+**Пример заполнения (начните свою таблицу):**
+
+| ID   | Наименование теста                       | Ожидаемый результат (формат) | Фактический результат | Статус |
+|------|------------------------------------------|------------------------------|------------------------|--------|
+| TC-01 | GET /tasks – получение пустого списка    | 200, []                      | 200, []                | Pass   |
+| TC-02 | POST /tasks – создание задачи с обязательными полями | 201, {"id":1,"title":"Помыть посуду","description":null,"completed":false} | ... | ... |
+| ...   | ...                                      | ...                          | ...                    | ...    |
+
+#### 5.3. Найденные дефекты (пример офорлмения)
+
+| ID      | Описание | Шаги воспроизведения | Ожидаемый результат | Фактический результат | Серьёзность |
+|---------|----------|-----------------------|---------------------|------------------------|-------------|
+| BUG-01  | PUT /tasks позволяет обновить задачу без указания поля `completed` | 1. Создать задачу. 2. PUT `/tasks/1` с телом `{"title": "a", "description": "b"}` | 422 Unprocessable Entity, ошибка валидации | 200 OK, задача обновлена, `completed` = false | Значительный |
+
+
+#### 5.4. Общий вывод
+
+Опишите, насколько API соответствует заявленным требованиям. Какие аспекты работают корректно, какие нет. Какие дефекты были выявлены и как они влияют на работу системы.
+
+---
+
+
+**Преподаватель:** __________________  
+**Дата сдачи:** __________________
