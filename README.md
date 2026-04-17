@@ -11,6 +11,7 @@
 10. [Лабораторная №10](https://github.com/malhArtem/TIS/blob/main/labs/%D0%9B%D0%B0%D0%B1%2010.md) - Чтение сообщений об ошибках
 11. [Лабораторная №11](https://github.com/malhArtem/TIS/blob/main/labs%2F%D0%9B%D0%B0%D0%B1%20%7E%2011%20%28PyTest%29.md) - Pytest(python)
 12. [Лабораторная №12](https://github.com/malhArtem/TIS/blob/main/labs/%D0%9B%D0%B0%D0%B1%2012.md) - Тестирование API
+13. [Лабораторная №13](https://github.com/malhArtem/TIS/blob/main/labs/%D0%9B%D0%B0%D0%B1%2013.md) - Тестирование документации API
 ---
 
 
